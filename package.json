@@ -1,0 +1,22 @@
+{
+  "name": "opentulsa",
+  "version": "0.0.0",
+  "description": "Application for browsing and searching Open Tulsa Data",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "John A. Dungan",
+  "license": "MIT",
+  "dependencies": {
+    "browserify": "~3.44.x",
+    "gulp": "3.8.x",
+    "gulp-notify": "^2.2.0",
+    "gulp-util": "^3.0.4",
+    "react": "^0.13.1",
+    "reactify": "^1.1.0",
+    "underscore": "*",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.1.0"
+  }
+}
