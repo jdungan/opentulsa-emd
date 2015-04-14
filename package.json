@@ -13,6 +13,7 @@
     "gulp": "3.8.x",
     "gulp-notify": "^2.2.0",
     "gulp-util": "^3.0.4",
+    "pretty-date": "^0.2.0",
     "react": "^0.13.1",
     "reactify": "^1.1.0",
     "underscore": "*",
