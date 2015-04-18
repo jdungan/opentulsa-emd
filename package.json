@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "browserify": "~3.44.x",
+    "d3": "^3.5.5",
     "gulp": "3.8.x",
     "gulp-notify": "^2.2.0",
     "gulp-util": "^3.0.4",

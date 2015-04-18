@@ -4,11 +4,32 @@ var _ = require('underscore');
 var prettydate = require('pretty-date')
 
 var WorkOrderDiv = React.createClass({
+  SearchFields : [
+      "WorkOrderNumber",
+      "OpenDate",
+      "Status",
+      "UnitNumber",
+      "CreatedBy",
+      "CompletedDate",
+      "CloseDate",
+      "NotifyName",
+      "UsingDeptName",
+      "LocationName"
+  ],
   getInitialState: function() {
-    return {data: [],searchString:''}
-    },
-  textSearch: function (e) {
-    this.setState({searchString:e.target.value.toLowerCase()});
+    return ({
+      selectList:this.SearchFields,
+      search: {
+        text:"",
+        field:"WorkOrderNumber"
+      },
+      workOrders:[]
+    
+    })},
+  SearchChange: function (data) {
+    var newState = this.state
+    newState.search = data
+    this.setState(newState);
     },
   componentDidMount: function() {
     $.ajax({
@@ -16,7 +37,9 @@ var WorkOrderDiv = React.createClass({
       type: "GET",
       dataType: 'json',
       success: function(data) {
-        this.setState({data: data.EMDList.WorkOrders.WorkOrder});
+        var newState = this.state
+        newState.workOrders = data.EMDList.WorkOrders.WorkOrder
+        this.setState(newState)
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -26,32 +49,60 @@ var WorkOrderDiv = React.createClass({
   render: function() {
     return (
       <div>
-        <input placeholder =  "Type here to search" 
-               value = {this.state.searchString} 
-               onChange={this.textSearch} />
-        
-       <WorkOrderList data={this.state.data} search={this.state.searchString}/>
-      
-      </div>
+        <nav className="navbar navbar-default">
+          <SearchBar selectList={ this.SearchFields } search={this.state.search} onChange={this.SearchChange} />
+        </nav>
+
+        <WorkOrderList data={this.state.workOrders} filter={this.state.search} />
+      </div> 
     );
   }
 });
 
+var SearchBar = React.createClass({
+  handleSelectChange: function (e) {
+    this.props.search.field = e.target.value
+    this.props.onChange(this.props.search);
+  },
+  handleInputChange: function (e) {
+    this.props.search.text = e.target.value.toLowerCase()
+    this.props.onChange(this.props.search);
+  },
+  render: function () {
+    var selectOptions = this.props.selectList.map(function (optionDescription) {
+      return (
+        <option value= {optionDescription}> {optionDescription} </option>
+      )
+    })
+    return (
+      <form className="navbar-form navbar-left" role="search">
+        <div className="form-group">
+          <select onChange = {this.handleSelectChange}>
+            {selectOptions}
+          </select>
+          <input type="text" className="form-control"placeholder="Type here to search" value={this.props.search.text} onChange={this.handleInputChange} />
+        </div>
+      </form>
+    )
+  }
+});
+
+   
+
 var WorkOrderList = React.createClass({
   render: function() {
-    var search =this.props.search
+    var filter = this.props.filter
     workorders = this.props.data
       .filter(function(order){
-        return order.NotifyName.toLowerCase().match( search );
+        return order[filter.field].toLowerCase().match(filter.text );
       })
       .map(function (order) {
         return (
             <WorkOrder data={order} key ={order.WorkOrderNumber}/>
         );
       });
-
     return (
-      <ul>
+      <ul className="list-group">
         {workorders}
       </ul>
     );
@@ -63,7 +114,7 @@ var WorkOrder = React.createClass({
     var diff = new Date() - new Date(this.props.data.OpenDate);    
     var age = prettydate.format(new Date (new Date() - diff))
     return (
-      <li >
+      <li className="list-group-item">
         <p>NotifyName: {this.props.data.NotifyName}</p>
         <p>WorkOrderNumber: {this.props.data.WorkOrderNumber}</p>
         <p>Status: {this.props.data.Status}</p>
@@ -94,7 +145,7 @@ var JobList = React.createClass({
     }
       
     return ( 
-      <ul>
+      <ul className="list-group">
         {jobs}
       </ul>
     )
@@ -104,7 +155,7 @@ var JobList = React.createClass({
 var Job = React.createClass({
   render: function () {
     return(
-      <li>
+      <li className="list-group-item">
         <p>JobID: {this.props.data.JobID}</p>
         <p>JobWorkOrderNumber: {this.props.data.JobWorkOrderNumber}</p>
         <p>JobReasonCode: {this.props.data.JobReasonCode}</p>
@@ -121,8 +172,11 @@ var Job = React.createClass({
   }
 })
 
-// "https://www.cityoftulsa.org/cot/opendata/OpenData_EMDlist.jsn"
+
+
+
+var opentulsa = "https://www.cityoftulsa.org/cot/opendata/OpenData_EMDlist.jsn"
 React.render(
   <WorkOrderDiv url="orders.json" />,
-  document.getElementById('work_orders')
+  document.body
 );
