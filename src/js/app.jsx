@@ -58,7 +58,7 @@ var WorkOrderDiv = React.createClass({
             <SearchBar selectList={ this.SearchFields } search={this.state.search} onChange={this.SearchChange} />
           </div>
         </nav>
-
+        <BarChart data={this.state.workOrders}></BarChart>
         <WorkOrderList data={this.state.workOrders} filter={this.state.search} />
       </div> 
     );
@@ -103,8 +103,6 @@ var SearchBar = React.createClass({
   }
 });
 
-   
-
 var WorkOrderList = React.createClass({
   render: function() {
     var filter = this.props.filter
@@ -119,6 +117,7 @@ var WorkOrderList = React.createClass({
       });
     return (
       <ul className="list-group">
+        <a className="list-group-item active">Work Orders</a>
         {workorders}
       </ul>
     );
@@ -181,8 +180,8 @@ var JobList = React.createClass({
       
     return (
       <div>
-        <p>Jobs</p> 
         <ul className="list-group">
+          <a className="list-group-item active">Jobs</a>
           {jobs}
         </ul>
       </div>
@@ -219,6 +218,15 @@ var Job = React.createClass({
   }
 })
 
+
+var BarChart = React.createClass({
+  render: function () {
+    return(
+      <svg></svg>
+    )
+  }
+  
+});
 
 var opentulsa = "https://www.cityoftulsa.org/cot/opendata/OpenData_EMDlist.jsn"
 React.render(
