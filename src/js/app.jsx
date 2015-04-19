@@ -127,7 +127,16 @@ var WorkOrderList = React.createClass({
 
 var WorkOrder = React.createClass({
   handledButtonClick: function (e) {
-    
+    var current_class = $("#"+this.props.data.WorkOrderNumber).attr("class")
+    switch (current_class){
+    case "collapse":
+      new_class = "collapse.in"
+      break;
+    case "collapse.in":
+      new_class = "collapse"
+      break;
+    } 
+    $("#"+this.props.data.WorkOrderNumber).attr("class",new_class)
   },
   render: function() {
     var diff = new Date() - new Date(this.props.data.OpenDate);    
@@ -136,7 +145,7 @@ var WorkOrder = React.createClass({
       <li className="list-group-item">
         <p>NotifyName: {this.props.data.NotifyName}</p>
         <p>WorkOrderNumber: {this.props.data.WorkOrderNumber}</p>
-        <button className="btn btn-primary" type="button" data-toggle="collapse" data-target={"#"+this.props.data.WorkOrderNumber} aria-expanded="false" aria-controls={this.props.data.WorkOrderNumber}>
+        <button className="btn btn-primary" type="button" onClick={this.handledButtonClick} data-target={"#"+this.props.data.WorkOrderNumber} aria-expanded="false" aria-controls={this.props.data.WorkOrderNumber}>
           Details ...
         </button>
         <div className="collapse" id={this.props.data.WorkOrderNumber}>
