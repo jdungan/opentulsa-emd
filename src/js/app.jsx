@@ -280,7 +280,7 @@ var Summary = React.createClass({
       <div className="page-header" style={{padding:'3%'}} >
       <h1>Work Orders&nbsp;  
         <small>
-            There are {summary[0].value} work orders and {summary[1].value} jobs in this list.
+          There are {summary[0].value} work orders and {summary[1].value} jobs in this list.
         </small>
       </h1>
       </div>
