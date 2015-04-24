@@ -1,8 +1,8 @@
 /** @jsx React.DOM */
 var React = require('react/dist/react');
-var PureRenderMixin = require('react/addons').addons.PureRenderMixin;
 var _ = require('underscore');
 var prettydate = require('pretty-date')
+var d3 = require("d3")
 
 var WorkOrderDiv = React.createClass({
   SearchFields : [
@@ -24,13 +24,11 @@ var WorkOrderDiv = React.createClass({
         text:"",
         field:"NotifyName"
       },
-      workOrders:[]
+      workorders:[]
     
     })},
   SearchChange: function (data) {
-    var newState = this.state
-    newState.search = data
-    this.setState(newState);
+    this.setState({search:data})
     },
   componentDidMount: function() {
     $.ajax({
@@ -38,10 +36,9 @@ var WorkOrderDiv = React.createClass({
       type: "GET",
       dataType: 'json',
       success: function(data) {
-        var newOrders = _.map(data.EMDList.WorkOrders.WorkOrder,function(i){return i})
         this.setState(
           {
-            workOrders: _.union(this.state.workOrders,newOrders)
+            workorders: data.EMDList.WorkOrders.WorkOrder
            }
          );
       }.bind(this),
@@ -51,6 +48,13 @@ var WorkOrderDiv = React.createClass({
     });
   },
   render: function() {
+    var workorders = []
+    _.each(this.state.workorders,function (order) {      
+      if (order[this.state.search.field].toLowerCase().match(this.state.search.text)){
+        workorders.push(order)
+      }
+    },this)
+
     return (
       <div>
         <nav className="navbar navbar-default navbar-fixed-top" >
@@ -58,8 +62,8 @@ var WorkOrderDiv = React.createClass({
             <SearchBar selectList={ this.SearchFields } search={this.state.search} onChange={this.SearchChange} />
           </div>
         </nav>
-        <BarChart data={this.state.workOrders}></BarChart>
-        <WorkOrderList data={this.state.workOrders} filter={this.state.search} />
+        <Summary data={workorders}/>
+        <WorkOrderList data={workorders} />
       </div> 
     );
   }
@@ -105,16 +109,11 @@ var SearchBar = React.createClass({
 
 var WorkOrderList = React.createClass({
   render: function() {
-    var filter = this.props.filter
-    workorders = this.props.data
-      .filter(function(order){
-        return order[filter.field].toLowerCase().match(filter.text );
-      })
-      .map(function (order) {
-        return (
-            <WorkOrder data={order} key ={order.WorkOrderNumber}/>
-        );
-      });
+    workorders = this.props.data.map(function (order) {
+      return(
+        <WorkOrder data={order} key ={order.WorkOrderNumber}/>
+      )
+    })
     return (
       <ul className="list-group">
         <a className="list-group-item active">Work Orders</a>
@@ -144,6 +143,8 @@ var WorkOrder = React.createClass({
       <li className="list-group-item">
         <p>NotifyName: {this.props.data.NotifyName}</p>
         <p>WorkOrderNumber: {this.props.data.WorkOrderNumber}</p>
+        <p>This was opened {age}.</p>
+
         <button className="btn btn-primary" type="button" onClick={this.handledButtonClick} data-target={"#"+this.props.data.WorkOrderNumber} aria-expanded="false" aria-controls={this.props.data.WorkOrderNumber}>
           Details ...
         </button>
@@ -157,7 +158,6 @@ var WorkOrder = React.createClass({
             <p>UsingDeptName: {this.props.data.UsingDeptName}</p>
             <p>LocationName: {this.props.data.LocationName}</p>
             <p>OpenDate: {this.props.data.OpenDate}</p>
-            <p>Age: { age }</p>
             <JobList jobs={this.props.data.Jobs.Job}/>
           </div>
         </div>
@@ -219,14 +219,126 @@ var Job = React.createClass({
 })
 
 
-var BarChart = React.createClass({
+
+var getJobs = function (wo_list){
+  
+  var all_jobs = []
+
+  _.each(wo_list,function (wo) {
+    var job_list = wo.Jobs.Job
+    
+    if (_.isArray(job_list)) {
+      _.each(job_list,function(i){
+        all_jobs.push(i)
+      })
+    } else {
+      all_jobs.push(job_list)  
+    }
+  })
+    
+  return all_jobs
+
+}
+
+var Summary = React.createClass({
+  getInitialState: function (){
+    return({
+      data: []
+    })
+  },
+  
   render: function () {
+
+    var summarize = function (data) {
+      var payload = []
+      var jobs = getJobs(data)
+
+      job_status=[[],[]]
+      
+      _.each(jobs,function (e, i) {
+        var stat = e.JobStatusDescription
+        var seenit = _.findIndex(job_status[0],function (val) {
+          return stat===val
+        })
+        if (seenit===-1){
+          job_status[0].push(stat)
+          job_status[1].push(1)
+        } else {
+          job_status[1][seenit] = job_status[1][seenit] + 1
+        }
+      })
+            
+      payload.push({label:"Total Work Orders",value:data.length})
+      payload.push({label:"Total Jobs",value:jobs.length})
+      payload.push({label:"Status",value:job_status})
+      return payload
+    }
+    
+    summary = summarize (this.props.data)
+    
     return(
-      <svg></svg>
+      <div className="page-header" style={{padding:'3%'}} >
+      <h1>Work Orders&nbsp;  
+        <small>
+            There are {summary[0].value} work orders and {summary[1].value} jobs in this list.
+        </small>
+      </h1>
+        <Chart labels={summary[2].value[0]} values={summary[2].value[1]}></Chart>
+      </div>
     )
   }
-  
+})
+
+var Chart = React.createClass({
+  getInitialState: function () {
+    return({
+      width : 96,
+      height : 32,
+      xScale : d3.scale.ordinal().domain(this.props.labels).rangeRoundBands([0, this.props.width], .2),
+      yScale : d3.scale.linear().range([ this.props.height, 0])
+    })
+  },
+  render: function () {
+    var labels = this.props.labels.map(function (label,idx) {
+      return(
+         <Label {...this.props} index={idx} text={label} />
+      )
+    }.bind(this))
+    return(
+      <div>
+        <svg width={this.props.width} height={this.props.height}>
+          {labels}
+        </svg>
+      </div>
+    )
+  }
 });
+
+var Label = React.createClass({
+  render: function () {
+    return(
+      <text x={this.props.xScale(this.props.index)} y={this.props.height}> {this.props.text} </text>
+    )
+  }
+});
+
+var Bar = React.createClass({
+  getInitialState: function () {
+    return ({
+      x:0,
+      y:0
+      })
+  },
+  render: function () {
+    return (
+      <rect fill={this.props.fill}
+        width={this.props.width} 
+        height={this.props.height} 
+        x={this.state.x} 
+        y={this.state.y} />
+    )
+  }
+})
 
 var opentulsa = "https://www.cityoftulsa.org/cot/opendata/OpenData_EMDlist.jsn"
 React.render(
