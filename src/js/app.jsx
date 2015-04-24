@@ -283,7 +283,6 @@ var Summary = React.createClass({
             There are {summary[0].value} work orders and {summary[1].value} jobs in this list.
         </small>
       </h1>
-        <Chart labels={summary[2].value[0]} values={summary[2].value[1]}></Chart>
       </div>
     )
   }
