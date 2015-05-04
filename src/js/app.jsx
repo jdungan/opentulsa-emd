@@ -49,8 +49,12 @@ var WorkOrderDiv = React.createClass({
   },
   render: function() {
     var workorders = []
-    _.each(this.state.workorders,function (order) {      
-      if (order[this.state.search.field].toLowerCase().match(this.state.search.text)){
+    _.each(this.state.workorders,function (order) {
+      var testString = ""
+      if  (order[this.state.search.field]){
+        testString = order[this.state.search.field]
+      }  
+      if (testString.match(this.state.search.text)){
         workorders.push(order)
       }
     },this)
@@ -59,7 +63,7 @@ var WorkOrderDiv = React.createClass({
       <div>
         <nav className="navbar navbar-default navbar-fixed-top" >
           <div className="container">
-            <SearchBar selectList={ this.SearchFields } search={this.state.search} onChange={this.SearchChange} />
+            <SearchBar selectList={this.SearchFields} onChange={this.SearchChange} />
           </div>
         </nav>
         <Summary data={workorders}/>
@@ -72,35 +76,43 @@ var WorkOrderDiv = React.createClass({
 var SearchBar = React.createClass({
   getInitialState: function () {
     return({
-      selected : "NotifyName"
-      
+      selectList:[],
+      selected : "NotifyName",
+      search:{text:"",field:"NotifyName"}
     })
   },
   handleSelectChange: function (e) {
-    this.props.search.field = e.target.innerText;
-    this.state.selected = e.target.innerText;
-    this.props.onChange(this.props.search);
+    var newSearch = {
+      text:this.state.search.text,
+      field: e.target.innerText
+    }
+    this.setState({
+      selected:newSearch.field,
+      search:newSearch
+    })
+    this.props.onChange(newSearch);
   },
   handleInputChange: function (e) {
-    this.props.search.text = e.target.value.toLowerCase()
-    this.props.onChange(this.props.search);
+    var newSearch = {text:e.target.value.toLowerCase(),field:this.state.search.field}
+    this.setState({search:newSearch})
+    this.props.onChange(newSearch);
   },
   render: function () {
     var selectOptions = this.props.selectList.map(function (optionDescription) {
       return (
-        <li role="presentation"><a role="menuitem" tabIndex="-1" >{optionDescription}</a> </li>
+        <li role="presentation" key={optionDescription}><a role="menuitem" tabIndex="-1" >{optionDescription}</a> </li>
       )
     })
     return (
       <form className="navbar-form navbar-left" role="search">
         <div className="input-group">
           <div className="input-group-btn">
-            <button type="button" className="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">{this.state.selected } <span className="caret"></span></button>
+            <button type="button" className="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">{this.state.selected} <span className="caret"></span></button>
             <ul className="dropdown-menu" role="menu" onClick = {this.handleSelectChange} >
               {selectOptions}
             </ul>
           </div>
-          <input type="text" className="form-control" aria-label="..." placeholder="Type here to search" value={this.props.search.text} onChange={this.handleInputChange} ></input>
+          <input type="text" className="form-control" aria-label="..." placeholder="Type here to search" value={this.state.search.text} onChange={this.handleInputChange} ></input>
         </div>
       </form>
     )
@@ -341,6 +353,6 @@ var Bar = React.createClass({
 
 var opentulsa = "https://www.cityoftulsa.org/cot/opendata/OpenData_EMDlist.jsn"
 React.render(
-  <WorkOrderDiv url="orders.json" />,
+  <WorkOrderDiv url={opentulsa} />,
   document.body
 );
